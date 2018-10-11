@@ -29,14 +29,16 @@
 #include <sstream>
 #include <fstream>
 
-#ifdef MSVC_COMPILER
-// windows.h has min/max macro which causes problems when using std::min/max
-#define NOMINMAX
-#include <windows.h>
-#include <io.h>
+#ifdef _WIN32
+#     ifndef  NOMINMAX
+             // windows.h has min/max macro which causes problems when using std::min/max
+#            define NOMINMAX 1
+#     endif
+# include <windows.h>
+# include <io.h>
 #else
-#include <sys/mman.h>
-#include <unistd.h> // for getpid, file_size, clock_gettime
+# include <sys/mman.h>
+# include <unistd.h> // for getpid, file_size, clock_gettime
 #endif
 
 

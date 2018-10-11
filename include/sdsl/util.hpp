@@ -45,13 +45,14 @@
 #include <typeinfo>
 
 
-#ifndef MSVC_COMPILER
+#ifndef _WIN32  // MSVC_COMPILER
 #include <sys/time.h>	 // for struct timeval
 #include <sys/resource.h> // for struct rusage
 #include <libgen.h>		  // for basename
 #include <unistd.h>		  // for getpid, file_size, clock_gettime
 #include <cxxabi.h>
 #else
+//#define MSVC_COMPILER 1 // ??
 #include <process.h>
 #include <iso646.h>
 #endif
