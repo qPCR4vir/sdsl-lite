@@ -826,7 +826,7 @@ public:
 			return file_content.data();
 		}
 		memory_monitor::record(file_size);
-#ifdef MSVC_COMPILER
+#ifdef _WIN32  // MSVC_COMPILER
 		HANDLE fh = (HANDLE)_get_osfhandle(fd);
 		if (fh == INVALID_HANDLE_VALUE) {
 			return nullptr;
@@ -871,7 +871,7 @@ public:
 			return 0;
 		}
 		memory_monitor::record(-((int64_t)size));
-#ifdef MSVC_COMPILER
+#ifdef  _WIN32  // MSVC_COMPILER
 		if (UnmapViewOfFile(addr)) return 0;
 		return -1;
 #else
@@ -898,7 +898,7 @@ public:
 		if (is_ram_file(fd)) {
 			return ram_fs::truncate(fd, new_size);
 		}
-#ifdef MSVC_COMPILER
+#ifdef  _WIN32  // MSVC_COMPILER
 		auto ret		  = _chsize_s(fd, new_size);
 		if (ret != 0) ret = -1;
 		return ret;
