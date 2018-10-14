@@ -744,6 +744,8 @@ public:
 	}
 
 public:
+
+
 	static void use_hugepages(size_t bytes = 0)
 	{
 #ifndef _WIN32   // MSVC_COMPILER
@@ -751,9 +753,12 @@ public:
 		hugepage_allocator::the_allocator().init(bytes);
 		m.hugepages = true;
 #else
-		throw std::runtime_error("hugepages not support on _WIN32    MSVC_COMPILER");
+		// avoid error: unused parameter 'bytes' [-Werror=unused-parameter]
+	    throw std::runtime_error(std::string("hugepages not support on _WIN32- not set bytes: ") +
+	                             std::to_string(bytes) );
 #endif
-	}
+    }
+
 	template <class t_vec>
 	static void resize(t_vec& v, const typename t_vec::size_type capacity)
 	{
