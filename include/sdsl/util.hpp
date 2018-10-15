@@ -45,14 +45,16 @@
 #include <typeinfo>
 
 
-#ifndef _WIN32  // MSVC_COMPILER
-#include <sys/time.h>	 // for struct timeval
+#ifndef  MSVC_COMPILER
+#   include <cxxabi.h>
+#endif
+
+#ifndef _WIN32
+#include <sys/time.h>	  // for struct timeval
 #include <sys/resource.h> // for struct rusage
 #include <libgen.h>		  // for basename
 #include <unistd.h>		  // for getpid, file_size, clock_gettime
-#include <cxxabi.h>
 #else
-//#define MSVC_COMPILER 1 // ??
 #include <process.h>
 #include <iso646.h>
 #endif
@@ -198,10 +200,16 @@ inline size_t file_size(const std::string& file)
 inline std::string basename(std::string file)
 {
 	file = disk_file_name(file); // remove RAM-prefix
-#ifdef MSVC_COMPILER
+#ifdef _WIN32  // MSVC_COMPILER
 	char* c						= _strdup((const char*)file.c_str());
 	char  file_name[_MAX_FNAME] = {0};
-	::_splitpath_s(c, NULL, 0, NULL, NULL, file_name, _MAX_FNAME, NULL, 0);
+#   ifdef 		MSVC_COMPILER
+	    ::_splitpath_s(c, NULL, 0, NULL, NULL, file_name, _MAX_FNAME, NULL, 0);
+#   else
+	    ::_splitpath  (c, NULL,    NULL,       file_name,             NULL   );
+ //_splitpath(*_FullPath,*_Drive, *_Dir,      *_Filename,            *_Ext    ) __MINGW_ATTRIB_DEPRECATED_SEC_WARN;
+#   endif
+
 	std::string res(file_name);
 #else
 	char*		c   = strdup((const char*)file.c_str());
@@ -219,12 +227,19 @@ inline std::string dirname(std::string file)
 {
 	bool ram_file = is_ram_file(file);
 	file		  = disk_file_name(file); // remove RAM-prefix
-#ifdef MSVC_COMPILER
+
+#ifdef _WIN32  // MSVC_COMPILER
 	char* c					 = _strdup((const char*)file.c_str());
 	char  dir_name[_MAX_DIR] = {0};
 	char  drive[_MAX_DRIVE]  = {0};
-	::_splitpath_s(c, drive, _MAX_DRIVE, dir_name, _MAX_DIR, NULL, 0, NULL, 0);
+#   ifdef 		MSVC_COMPILER
+    	::_splitpath_s(c, drive, _MAX_DRIVE, dir_name, _MAX_DIR, NULL, 0, NULL, 0);
+#   else
+    	::_splitpath  (c, drive,             dir_name,           NULL,    NULL   );
+    //_splitpath(*_FullPath,*_Drive,        *_Dir,      *_Filename,     *_Ext    ) __MINGW_ATTRIB_DEPRECATED_SEC_WARN;
+#   endif
 	std::string res = std::string(drive) + std::string(dir_name);
+
 #else
 	char*		c   = strdup((const char*)file.c_str());
 	std::string res = std::string(::dirname(c));
@@ -554,8 +569,11 @@ inline void util::cyclic_shifts(uint64_t* vec, uint8_t & n, uint64_t k, uint8_t 
 		vec[n] |= k << offset;
 		offset += int_width;
 		if (offset >= 64) {
-			vec[n + 1] = 0;
-			vec[++n] = k >> (int_width - (offset - 64));
+			++n;
+			if (int_width == 64)
+				return;
+			assert(int_width - (offset - 64) < 64);
+			vec[n] = k >> (int_width - (offset - 64));
 			offset -= 64;
 		}
 	} while (offset != 0);
